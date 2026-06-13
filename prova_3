@@ -21,14 +21,22 @@ GREEN = (100, 220, 100)
 RED = (220, 100, 100)
 BLUE = (210, 220, 235)
 
-# Dades
+# Parelles imatge -> vocal
 pairs = {
     "A.png": "a",
     "I.png": "i",
-    "U.png": "u",
+    "U.jpeg": "u",
     "E.png": "e",
-    "O.png": "o"
+    "O.jpeg": "o"
 }
+
+# Carregar imatges
+images = {}
+
+for filename in pairs.keys():
+    img = pygame.image.load(filename).convert_alpha()
+    img = pygame.transform.scale(img, (80, 80))
+    images[filename] = img
 
 left_items = list(pairs.keys())
 right_items = list(pairs.values())
@@ -69,14 +77,13 @@ for i, item in enumerate(right_items):
     )
     right_cards.append((rect, item))
 
-
 running = True
 
 while running:
 
     screen.fill(BLUE)
 
-    # Mostrar cartes esquerra
+    # Mostrar cartes esquerra (imatges)
     for rect, value in left_cards:
 
         color = GRAY
@@ -90,13 +97,11 @@ while running:
         pygame.draw.rect(screen, color, rect, border_radius=12)
         pygame.draw.rect(screen, BLACK, rect, 2, border_radius=12)
 
-        text = font.render(value, True, BLACK)
-        screen.blit(
-            text,
-            text.get_rect(center=rect.center)
-        )
+        img = images[value]
+        img_rect = img.get_rect(center=rect.center)
+        screen.blit(img, img_rect)
 
-    # Mostrar cartes dreta
+    # Mostrar cartes dreta (text)
     for rect, value in right_cards:
 
         color = GRAY
@@ -116,7 +121,7 @@ while running:
             text.get_rect(center=rect.center)
         )
 
-    # Eliminar vermell després de 0.7 segons
+    # Eliminar color vermell després de 0.7 segons
     if wrong_pair:
         if time.time() - wrong_time > 0.7:
             wrong_pair = None
@@ -124,7 +129,7 @@ while running:
     # Comprovar victòria
     if len(matched) == len(pairs) * 2:
         win_text = font.render("HAS GUANYAT!", True, (0, 150, 0))
-        screen.blit(win_text, (450, 20))
+        screen.blit(win_text, (430, 10))
 
     for event in pygame.event.get():
 
@@ -135,13 +140,13 @@ while running:
 
             pos = pygame.mouse.get_pos()
 
-            # Esquerra
+            # Selecció esquerra
             for rect, value in left_cards:
                 if rect.collidepoint(pos):
                     if value not in matched:
                         selected_left = value
 
-            # Dreta
+            # Selecció dreta
             for rect, value in right_cards:
                 if rect.collidepoint(pos):
                     if value not in matched:
