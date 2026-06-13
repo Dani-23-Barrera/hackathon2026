@@ -63,6 +63,7 @@ pantalla = MENU
 boto_teoria = pygame.Rect(450, 280, 300, 80)
 boto_jugar = pygame.Rect(450, 400, 300, 80)
 boto_tornar = pygame.Rect(30, 30, 180, 60)
+boto_menu_joc = pygame.Rect(30, 30, 220, 60)
 
 # =========================
 # IMAGEN TEORÍA
@@ -102,9 +103,10 @@ matched = []
 
 ultimo_guardado = time.time()
 partida_finalizada = False
+game_completed = False
 
 # =========================
-# CREAR CARTAS
+# CARTAS
 # =========================
 left_cards = []
 right_cards = []
@@ -113,25 +115,15 @@ card_width = 450
 card_height = 90
 
 for i, item in enumerate(left_items):
-    rect = pygame.Rect(
-        50,
-        100 + i * 110,
-        card_width,
-        card_height
-    )
+    rect = pygame.Rect(50, 100 + i * 110, card_width, card_height)
     left_cards.append((rect, item))
 
 for i, item in enumerate(right_items):
-    rect = pygame.Rect(
-        700,
-        100 + i * 110,
-        card_width,
-        card_height
-    )
+    rect = pygame.Rect(700, 100 + i * 110, card_width, card_height)
     right_cards.append((rect, item))
 
 # =========================
-# BUCLE PRINCIPAL
+# LOOP
 # =========================
 running = True
 
@@ -144,7 +136,7 @@ while running:
 
         if event.type == pygame.MOUSEBUTTONDOWN:
 
-            # MENU
+            # ================= MENU =================
             if pantalla == MENU:
 
                 if boto_teoria.collidepoint(event.pos):
@@ -153,61 +145,68 @@ while running:
                 if boto_jugar.collidepoint(event.pos):
                     pantalla = JOC
 
-            # TEORIA
+            # ================= TEORIA =================
             elif pantalla == TEORIA:
 
                 if boto_tornar.collidepoint(event.pos):
                     pantalla = MENU
 
-            # JUEGO
+            # ================= JOC =================
             elif pantalla == JOC:
+
+                # BOTÓN MENÚ
+                if boto_menu_joc.collidepoint(event.pos):
+                    pantalla = MENU
+                    selected_left = None
+                    selected_right = None
+                    wrong_pair = None
+                    game_completed = False
+                    continue
 
                 pos = pygame.mouse.get_pos()
 
-                # Selección izquierda
-                for rect, value in left_cards:
-                    if rect.collidepoint(pos):
-                        if value not in matched:
-                            selected_left = value
+                if not game_completed:
 
-                # Selección derecha
-                for rect, value in right_cards:
-                    if rect.collidepoint(pos):
-                        if value not in matched:
-                            selected_right = value
+                    # IZQUIERDA
+                    for rect, value in left_cards:
+                        if rect.collidepoint(pos):
+                            if value not in matched:
+                                selected_left = value
 
-                # Comprobar pareja
-                if selected_left and selected_right:
+                    # DERECHA
+                    for rect, value in right_cards:
+                        if rect.collidepoint(pos):
+                            if value not in matched:
+                                selected_right = value
 
-                    if pairs[selected_left] == selected_right:
-                        matched.append(selected_left)
-                        matched.append(selected_right)
+                    # COMPROBAR
+                    if selected_left and selected_right:
 
-                    else:
-                        wrong_pair = (
-                            selected_left,
-                            selected_right
-                        )
-                        wrong_time = time.time()
+                        if pairs[selected_left] == selected_right:
+                            matched.append(selected_left)
+                            matched.append(selected_right)
+                        else:
+                            wrong_pair = (selected_left, selected_right)
+                            wrong_time = time.time()
 
-                    selected_left = None
-                    selected_right = None
+                        selected_left = None
+                        selected_right = None
 
     # ================= MENU =================
     if pantalla == MENU:
 
         screen.fill(BLUE)
 
-        titol = font.render(
-            "Llenguatge de signes (ASL)",
-            True,
-            BLACK
-        )
+        # RESET
+        matched = []
+        selected_left = None
+        selected_right = None
+        wrong_pair = None
+        game_completed = False
+        partida_finalizada = False
 
-        screen.blit(
-            titol,
-            titol.get_rect(center=(WIDTH//2, 150))
-        )
+        titol = font.render("Llenguatge de signes (ASL)", True, BLACK)
+        screen.blit(titol, titol.get_rect(center=(WIDTH//2, 150)))
 
         pygame.draw.rect(screen, GRAY, boto_teoria)
         pygame.draw.rect(screen, BLACK, boto_teoria, 2)
@@ -215,16 +214,14 @@ while running:
         pygame.draw.rect(screen, GRAY, boto_jugar)
         pygame.draw.rect(screen, BLACK, boto_jugar, 2)
 
-        txt = small_font.render("TEORIA", True, BLACK)
         screen.blit(
-            txt,
-            txt.get_rect(center=boto_teoria.center)
+            small_font.render("TEORIA", True, BLACK),
+            small_font.render("TEORIA", True, BLACK).get_rect(center=boto_teoria.center)
         )
 
-        txt = small_font.render("JUGAR", True, BLACK)
         screen.blit(
-            txt,
-            txt.get_rect(center=boto_jugar.center)
+            small_font.render("JUGAR", True, BLACK),
+            small_font.render("JUGAR", True, BLACK).get_rect(center=boto_jugar.center)
         )
 
     # ================= TEORIA =================
@@ -233,11 +230,7 @@ while running:
         screen.fill(WHITE)
 
         titol = font.render("TEORIA", True, BLACK)
-
-        screen.blit(
-            titol,
-            titol.get_rect(center=(WIDTH//2, 60))
-        )
+        screen.blit(titol, titol.get_rect(center=(WIDTH//2, 60)))
 
         screen.blit(teoria_img, (100, 180))
 
@@ -251,164 +244,117 @@ while running:
         ]
 
         y = 180
-
         for linea in lineas:
-            txt = small_font.render(linea, True, BLACK)
-            screen.blit(txt, (550, y))
+            screen.blit(small_font.render(linea, True, BLACK), (550, y))
             y += 50
 
         pygame.draw.rect(screen, GRAY, boto_tornar)
         pygame.draw.rect(screen, BLACK, boto_tornar, 2)
 
-        txt = small_font.render("TORNAR", True, BLACK)
-
         screen.blit(
-            txt,
-            txt.get_rect(center=boto_tornar.center)
+            small_font.render("TORNAR", True, BLACK),
+            small_font.render("TORNAR", True, BLACK).get_rect(center=boto_tornar.center)
         )
 
-    # ================= JUEGO =================
+    # ================= JOC =================
     elif pantalla == JOC:
 
         screen.fill(BLUE)
 
-        # Guardar progreso cada 5 segundos
+        # BOTÓN MENÚ
+        pygame.draw.rect(screen, GRAY, boto_menu_joc)
+        pygame.draw.rect(screen, BLACK, boto_menu_joc, 2)
+
+        screen.blit(
+            small_font.render("MENÚ", True, BLACK),
+            small_font.render("MENÚ", True, BLACK).get_rect(center=boto_menu_joc.center)
+        )
+
+        # GUARDADO
         if time.time() - ultimo_guardado > 5:
-
-            progreso = {
-                "matched": matched
-            }
-
             requests.post(
                 "https://fun.codelearn.cat/hackathon/game/store_progress",
-                json={
-                    "game_id": game_id,
-                    "data": progreso
-                }
+                json={"game_id": game_id, "data": {"matched": matched}}
             )
-
-            print("Progreso guardado")
-
             ultimo_guardado = time.time()
 
-        # IZQUIERDA
+        # CARTAS IZQUIERDA
         for rect, value in left_cards:
 
-            sombra = rect.move(5, 5)
-
-            pygame.draw.rect(
-                screen,
-                SHADOW,
-                sombra,
-                border_radius=12
-            )
-
             color = GRAY
-
             if value in matched:
                 color = GREEN
-
             if wrong_pair and value in wrong_pair:
                 color = RED
 
-            pygame.draw.rect(
-                screen,
-                color,
-                rect,
-                border_radius=12
-            )
-
-            pygame.draw.rect(
-                screen,
-                BLACK,
-                rect,
-                2
-            )
+            pygame.draw.rect(screen, SHADOW, rect.move(5, 5), border_radius=12)
+            pygame.draw.rect(screen, color, rect, border_radius=12)
+            pygame.draw.rect(screen, BLACK, rect, 2)
 
             img = images[value]
-            img_rect = img.get_rect(center=rect.center)
+            screen.blit(img, img.get_rect(center=rect.center))
 
-            screen.blit(img, img_rect)
-
-        # DERECHA
+        # CARTAS DERECHA
         for rect, value in right_cards:
 
-            sombra = rect.move(5, 5)
-
-            pygame.draw.rect(
-                screen,
-                SHADOW,
-                sombra,
-                border_radius=12
-            )
-
             color = GRAY
-
             if value in matched:
                 color = GREEN
-
             if wrong_pair and value in wrong_pair:
                 color = RED
 
-            pygame.draw.rect(
-                screen,
-                color,
-                rect,
-                border_radius=12
-            )
+            pygame.draw.rect(screen, SHADOW, rect.move(5, 5), border_radius=12)
+            pygame.draw.rect(screen, color, rect, border_radius=12)
+            pygame.draw.rect(screen, BLACK, rect, 2)
 
-            pygame.draw.rect(
-                screen,
-                BLACK,
-                rect,
-                2
-            )
+            txt = small_font.render(value.upper(), True, BLACK)
+            screen.blit(txt, txt.get_rect(center=rect.center))
 
-            text = small_font.render(
-                value.upper(),
-                True,
-                BLACK
-            )
+        # ERROR TEMPORAL
+        if wrong_pair and time.time() - wrong_time > 0.7:
+            wrong_pair = None
 
-            screen.blit(
-                text,
-                text.get_rect(center=rect.center)
-            )
-
-        # Quitar error rojo
-        if wrong_pair:
-            if time.time() - wrong_time > 0.7:
-                wrong_pair = None
-
-        # GANAR
+        # VICTORIA
         if len(matched) == len(pairs) * 2:
-
-            win_text = font.render(
-                "HAS GUANYAT!",
-                True,
-                GREEN
-            )
-
-            screen.blit(
-                win_text,
-                win_text.get_rect(center=(WIDTH//2, 40))
-            )
+            game_completed = True
 
             if not partida_finalizada:
-
                 requests.post(
                     "https://fun.codelearn.cat/hackathon/game/finalize",
                     json={
                         "game_id": game_id,
-                        "data": {
-                            "matched": matched
-                        },
+                        "data": {"matched": matched},
                         "score": 100
                     }
                 )
-
-                print("Partida finalizada")
                 partida_finalizada = True
+
+        # PANEL VICTORIA
+        if game_completed:
+
+            overlay = pygame.Surface((WIDTH, HEIGHT))
+            overlay.set_alpha(180)
+            overlay.fill(BLACK)
+            screen.blit(overlay, (0, 0))
+
+            panel = pygame.Rect(300, 200, 600, 300)
+            pygame.draw.rect(screen, WHITE, panel, border_radius=20)
+            pygame.draw.rect(screen, BLACK, panel, 3, border_radius=20)
+
+            screen.blit(
+                font.render("HAS GUANYAT!", True, GREEN),
+                font.render("HAS GUANYAT!", True, GREEN).get_rect(center=(WIDTH//2, 280))
+            )
+
+            screen.blit(
+                small_font.render("Has completat el joc 🎉", True, BLACK),
+                small_font.render("Has completat el joc 🎉", True, BLACK).get_rect(center=(WIDTH//2, 350))
+            )
+
+            screen.blit(
+                small_font.render("Prem MENÚ per tornar", True, BLACK),
+                small_font.render("Prem MENÚ per tornar", True, BLACK).get_rect(center=(WIDTH//2, 410))
+            )
 
     pygame.display.flip()
     clock.tick(60)
